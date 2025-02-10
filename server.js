@@ -19,7 +19,7 @@ const server = http.createServer((req, res) =>
     }
     if (req.url === "/users" && req.method === "GET")
     {
-        userGetAll(req, res);
+        userGetAll(req, res, "users");
     }
 });
 

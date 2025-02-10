@@ -39,11 +39,11 @@ function dbUse(dbName)
 }
 
 // Create a table with the given name
-function dbCreateTable(tableName) 
+function dbCreateTable(dbName, tableName) 
 {
     return new Promise((resolve, reject) =>
     {
-        const queryTableCreation = `CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, password VARCHAR(255) NOT NULL)`;
+        const queryTableCreation = `CREATE TABLE IF NOT EXISTS ${dbName}.${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, password VARCHAR(255) NOT NULL)`;
         con.query(queryTableCreation, (err, result) =>
         {
             if (err)
@@ -64,7 +64,7 @@ async function dbSetup(dbName, tableName)
     {
         await dbCreate(dbName);
         await dbUse(dbName);
-        await dbCreateTable(tableName);
+        await dbCreateTable(dbName, tableName);
         console.log("Database and table setup is successful");
 
     } catch (err)
@@ -72,7 +72,6 @@ async function dbSetup(dbName, tableName)
         console.error("Error during database setup: ", err);
     }
 }
-
 
 // insert a given data to db
 function dbInsertRecord(tableName, record) 
@@ -108,8 +107,7 @@ function dbGetAllRecords(tableName)
             {
                 if (err.code === "ER_NO_SUCH_TABLE")
                 {
-                    console.warn("Theres no such table. Returning an empty list");
-                    return resolve([]);
+                    return reject(new Error(`There is no such table: ${tableName}`));
                 }
                 console.error("Error getting db:", err);
                 return reject(err);

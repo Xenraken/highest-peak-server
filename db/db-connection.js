@@ -1,5 +1,6 @@
 const mysql = require("mysql");
 
+
 const con = mysql.createConnection(
     {
         host: "localhost",
@@ -18,12 +19,5 @@ con.connect((err) =>
     console.log("Connected!");
 });
 
-con.query("CREATE DATABASE mydb", (err, result) => 
-{
-   if (err)
-    {
-        console.error("Error creating database: ", err);
-        throw err;
-    }
-    console.log("Database Created");
-});
+
+module.exports = con;

@@ -1,6 +1,6 @@
-const { write } = require("fs");
+const { write, rmSync } = require("fs");
 const http = require("http");
-const { userSignUp, userGetAll, userGetByFilter } = require("./controllers/user-controller");
+const { userSignUp, userGetAll, userGetByFilter, userGetAllSorted } = require("./controllers/user-controller");
 const { dbSetup, dbUse, dbDropTable, dbCreate, dbCreateTable } = require("./db/db-operations");
 const con = require("./db/db-connection");
 const { url } = require("inspector");
@@ -25,14 +25,23 @@ const server = http.createServer((req, res) =>
     }
     else if (path === "/users" && req.method === "GET")
     {
-        if (query && Object.keys(query).length > 0)
+        if (query && Object.keys(query).length > 0 && (query.id || query.name || query.email || query.password))
         {
             userGetByFilter(req, res, "users", query);
+        }
+        else if(query && Object.keys(query).length > 0 && (!query.id || !query.name || !query.email || !query.password))
+        {
+            userGetAllSorted(req, res, "users", query);
         }
         else
         {
             userGetAll(req, res, "users");
         }
+    }
+    else 
+    {
+        res.writeHead(404, { "Content-Type": "text/plain" });
+        res.end("404 not found: I am not exist.");
     }
 });
 

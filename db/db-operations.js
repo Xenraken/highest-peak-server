@@ -142,6 +142,28 @@ function dbGetRecordByFilter(tableName, query)
     });
 }
 
+function dbGetAllRecordsSorted(tableName, query) 
+{
+    return new Promise((resolve, reject) => 
+    {
+        const queryGettingAllRecordsSorted = `SELECT * FROM ${tableName} ORDER BY ${query}`;
+        con.query(queryGettingAllRecordsSorted, (err, result) => 
+        {
+            if (err) 
+            {
+                if (err.code === "ER_NO_SUCH_TABLE")
+                {
+                    return reject(new Error(`There is no such table: ${tableName}`));
+                }
+                console.error("Error getting sorted records", err);
+                return reject(err);
+            }
+            console.log(result);
+            resolve(result);
+        })
+    })
+}
+
 // delete a table as a whole
 function dbDropTable(tableName) 
 {
@@ -171,4 +193,5 @@ module.exports =
     dbGetAllRecords,
     dbGetRecordByFilter,
     dbDropTable,
+    dbGetAllRecordsSorted,
 }

@@ -1,5 +1,5 @@
 const { getPostData } = require("../utils/general-utils");
-const { dbInsertRecord, dbGetAllRecords, dbGetRecordByFilter } = require("../db/db-operations");
+const { dbInsertRecord, dbGetAllRecords, dbGetRecordByFilter, dbGetAllRecordsSorted } = require("../db/db-operations");
 
 
 // signup new user save user data to db
@@ -72,9 +72,34 @@ async function userGetByFilter(req, res, tableName, query)
     }
 }
 
+async function userGetAllSorted(req, res, tableName, query)
+{
+    try
+    {
+        const sortValue = Object.keys(query)[0];
+        const sortedRecords = await dbGetAllRecordsSorted(tableName, sortValue);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ message: `All users sorted by ${sortValue}:`, users: sortedRecords }));
+    }
+    catch (err) 
+    {
+        if (err.code === "ER_NO_SUCH_TABLE")
+        {
+            res.writeHead(404, { "Content-Type": "application/json" });
+        }
+        else
+        {
+            res.writeHead(500, { "Content-Type": "application/json" });
+        }
+        console.log(err);
+        res.end(JSON.stringify({ message: err.message }));
+    }
+}
+
 module.exports =
 {
     userSignUp,
     userGetAll,
     userGetByFilter,
+    userGetAllSorted,
 }

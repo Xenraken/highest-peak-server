@@ -16,7 +16,7 @@ function dbCreate(dbName)
             console.log(`Database created: ${dbName}`);
             resolve(result);
         });
-    })
+    });
 }
 
 // select given db to use
@@ -34,8 +34,8 @@ function dbUse(dbName)
             }
             console.log(`Using database: ${dbName}`);
             resolve(result);
-        })
-    })
+        });
+    });
 }
 
 // Create a table with the given name
@@ -53,8 +53,8 @@ function dbCreateTable(dbName, tableName)
             }
             console.log(`Table created: ${tableName}`);
             resolve(result);
-        })
-    })
+        });
+    });
 }
 
 // call dbCreate and dbCreateTable (needed for global asyncing)
@@ -90,9 +90,8 @@ function dbInsertRecord(tableName, record)
             }
             console.log(`1 record inserted ${JSON.stringify(result)}`);
             resolve(result);
-        })
-    }
-    )
+        });
+    });
 }
 
 // get all records from a table
@@ -109,19 +108,38 @@ function dbGetAllRecords(tableName)
                 {
                     return reject(new Error(`There is no such table: ${tableName}`));
                 }
-                console.error("Error getting db:", err);
+                console.error("Error getting table:", err);
                 return reject(err);
             }
             console.log(result);
             resolve(result);
-        })
-    })
+        });
+    });
 }
 
 // filter data from a table
-function dbGetRecordByFilter(tableName, filter) 
+function dbGetRecordByFilter(tableName, query) 
 {
-
+    return new Promise((resolve, reject) => 
+    {
+        const filterColumn = Object.keys(query)[0];
+        const filterValue = Object.values(query)[0];
+        const queryGetRecordByFilter = `SELECT * FROM ${tableName} WHERE ${filterColumn} = ?`;
+        con.query(queryGetRecordByFilter, [filterValue], (err, result) => 
+        {
+            if (err) 
+            {
+                if (err.code === "ER_NO_SUCH_TABLE")
+                {
+                    return reject(new Error(`There is no such table: ${tableName}`));
+                }
+                console.error("Error getting record by filter", err);
+                return reject(err);
+            }
+            console.log(result);
+            resolve(result);
+        });
+    });
 }
 
 // delete a table as a whole
@@ -139,8 +157,8 @@ function dbDropTable(tableName)
             }
             console.log(result);
             resolve(result);
-        })
-    })
+        });
+    });
 }
 
 module.exports =

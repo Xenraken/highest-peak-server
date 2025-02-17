@@ -1,25 +1,38 @@
 const { write } = require("fs");
 const http = require("http");
-const { userSignUp, userGetAll } = require("./controllers/user-controller");
+const { userSignUp, userGetAll, userGetByFilter } = require("./controllers/user-controller");
 const { dbSetup, dbUse, dbDropTable, dbCreate, dbCreateTable } = require("./db/db-operations");
 const con = require("./db/db-connection");
+const { url } = require("inspector");
+const { parse } = require("path");
 
 dbSetup("mydb", "users");
 
 const server = http.createServer((req, res) => 
 {
-    if (req.url === "/" && req.method === "GET")
+    const parsedUrl = new URL(req.url, `http://localhost:4000`);
+    const path = parsedUrl.pathname;
+    const query = Object.fromEntries(parsedUrl.searchParams);
+    const method = req.method;
+    if (path === "/" && method === "GET")
     {
         res.writeHead(200);
         res.end("Hello, I am the home page.");
     }
-    if (req.url === "/signup" && req.method === "POST")
+    else if (path === "/signup" && method === "POST")
     {
-        userSignUp(req, res);
+        userSignUp(req, res, "users");
     }
-    if (req.url === "/users" && req.method === "GET")
+    else if (path === "/users" && req.method === "GET")
     {
-        userGetAll(req, res, "users");
+        if (query && Object.keys(query).length > 0)
+        {
+            userGetByFilter(req, res, "users", query);
+        }
+        else
+        {
+            userGetAll(req, res, "users");
+        }
     }
 });
 

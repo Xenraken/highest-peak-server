@@ -6,15 +6,18 @@ function getPostData(req)
     {
         try
         {
-            let body = "";
-            req.on("data", (chunk) => 
+            const handleData = (chunk) => 
             {
                 body += chunk;
-            });
-            req.on("end", async () => 
+            };
+            const handleEndData = () => 
             {
+                req.removeAllListeners();
                 resolve(body);
-            });
+            }
+            let body = "";
+            req.on("data", handleData);
+            req.on("end", handleEndData);
         }
         catch (err)
         {

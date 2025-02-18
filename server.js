@@ -1,6 +1,6 @@
 const { write, rmSync } = require("fs");
 const http = require("http");
-const { userSignUp, userGetAll, userGetByFilter, userGetAllSorted } = require("./controllers/user-controller");
+const { userSignUp, userGetAll, userGetByFilter, userGetAllSorted, userDelete, userUpdate } = require("./controllers/user-controller");
 const { dbSetup, dbUse, dbDropTable, dbCreate, dbCreateTable } = require("./db/db-operations");
 const con = require("./db/db-connection");
 const { url } = require("inspector");
@@ -23,19 +23,43 @@ const server = http.createServer((req, res) =>
     {
         userSignUp(req, res, "users");
     }
+    else if (path === "/users" && method === "DELETE")
+    {
+        if (!query) 
+        {
+            res.writeHead(400, { "Content-Type": "text/plain" });
+            res.end("400 Bad Request: Invalid query parameters provided.");
+        }
+        else if (query && Object.keys(query).length > 0 && (query.id || query.name || query.email || query.password))
+        {
+            userDelete(req, res, "users", query);
+        }
+    }
     else if (path === "/users" && req.method === "GET")
     {
         if (query && Object.keys(query).length > 0 && (query.id || query.name || query.email || query.password))
         {
             userGetByFilter(req, res, "users", query);
         }
-        else if(query && Object.keys(query).length > 0 && (!query.id || !query.name || !query.email || !query.password))
+        else if (query && Object.keys(query).length > 0 && (!query.id || !query.name || !query.email || !query.password))
         {
             userGetAllSorted(req, res, "users", query);
         }
         else
         {
             userGetAll(req, res, "users");
+        }
+    }
+    else if (path === "/users" && req.method === "PATCH") 
+    {
+        if (!query || Object.keys(query).length < 1) 
+        {
+            res.writeHead(400, { "Content-Type": "text/plain" });
+            res.end("400 Bad Request: Invalid query parameters provided.");
+        }
+        else if (query && Object.keys(query).length < 3)
+        {
+            userUpdate(req, res, "users", query);
         }
     }
     else 
@@ -45,6 +69,6 @@ const server = http.createServer((req, res) =>
     }
 });
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => { console.log(`Server is running on port: ${PORT}`) });

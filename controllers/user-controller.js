@@ -1,8 +1,8 @@
 const { getPostData } = require("../utils/general-utils");
-const { dbInsertRecord, dbGetAllRecords, dbGetRecordByFilter, dbGetAllRecordsSorted } = require("../db/db-operations");
+const { dbInsertRecord, dbGetAllRecords, dbGetRecordByFilter, dbGetAllRecordsSorted, dbDeleteRecord, dbUpdateRecord } = require("../db/db-operations");
 
 
-// signup new user save user data to db
+// signup a new record save user data to db
 async function userSignUp(req, res, tableName)
 {
     try
@@ -25,7 +25,55 @@ async function userSignUp(req, res, tableName)
     }
 }
 
-// get all users with the given tableName
+// delete a record from the database with the given table name and query
+async function userDelete(req, res, tableName, query) 
+{
+    try
+    {
+        const deletedRecords = await dbDeleteRecord(tableName, query);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ message: `Users deleted:`, users: deletedRecords }));
+    }
+    catch (err) 
+    {
+        if (err.code === "ER_NO_SUCH_TABLE")
+        {
+            res.writeHead(404, { "Content-Type": "application/json" });
+        }
+        else
+        {
+            res.writeHead(500, { "Content-Type": "application/json" });
+        }
+        console.log(err);
+        res.end(JSON.stringify({ message: err.message }));
+    }
+}
+
+// update the given key value in the given table
+async function userUpdate(req, res, tableName, query)
+{
+    try
+    {
+        const updatedRecord = await dbUpdateRecord(tableName, query);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ message: "Updated record:", users: updatedRecord }));
+    }
+    catch (err)
+    {
+        if (err.code === "ER_NO_SUCH_TABLE")
+        {
+            res.writeHead(404, { "Content-Type": "application/json" });
+        }
+        else
+        {
+            res.writeHead(500, { "Content-Type": "application/json" });
+        }
+        console.log(err);
+        res.end(JSON.stringify({ message: err.message }));
+    }
+}
+
+// get all records with the given tableName
 async function userGetAll(req, res, tableName)
 {
     try
@@ -49,6 +97,7 @@ async function userGetAll(req, res, tableName)
     }
 }
 
+// filter records by the given filter query and table name
 async function userGetByFilter(req, res, tableName, query)
 {
     try
@@ -72,6 +121,7 @@ async function userGetByFilter(req, res, tableName, query)
     }
 }
 
+// sort all records in the given table with the given query key
 async function userGetAllSorted(req, res, tableName, query)
 {
     try
@@ -102,4 +152,6 @@ module.exports =
     userGetAll,
     userGetByFilter,
     userGetAllSorted,
+    userDelete,
+    userUpdate,
 }

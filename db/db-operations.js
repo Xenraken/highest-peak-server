@@ -1,6 +1,6 @@
 const con = require("./db-connection");
 
-// create database and create a table if not exists
+// create a database with the given name
 function dbCreate(dbName)
 {
     return new Promise((resolve, reject) =>
@@ -38,7 +38,7 @@ function dbUse(dbName)
     });
 }
 
-// Create a table with the given name
+// create a table with the given name in the given database
 function dbCreateTable(dbName, tableName) 
 {
     return new Promise((resolve, reject) =>
@@ -73,7 +73,25 @@ async function dbSetup(dbName, tableName)
     }
 }
 
-// insert a given data to db
+// select the record and return it
+function dbSelectRecord(tableName, key, value)
+{
+    return new Promise((resolve, reject) => 
+    {
+        const querySelect = `SELECT * FROM ${tableName} WHERE ${key} = ?`;
+        con.query(querySelect, [value], (err, result) => 
+        {
+            if (err)
+            {
+                console.error("Error selecting data:", err);
+                return reject(err);
+            }
+            resolve(result);
+        })
+    })
+}
+
+// insert the given record to the given table
 function dbInsertRecord(tableName, record) 
 {
     return new Promise((resolve, reject) => 
@@ -94,7 +112,72 @@ function dbInsertRecord(tableName, record)
     });
 }
 
-// get all records from a table
+
+// delete the record from the given table
+function dbDeleteRecord(tableName, record) 
+{
+    return new Promise((resolve, reject) =>
+    {
+        const key = Object.keys(record)[0];
+        const value = Object.values(record)[0];
+        const queryDeleteRecord = `DELETE FROM ${tableName} WHERE ${key} = ?`;
+        con.query(queryDeleteRecord, [value], (err, result) => 
+        {
+            if (err)
+            {
+                if (err.code === "ER_NO_SUCH_TABLE")
+                {
+                    return reject(new Error(`There is no such table: ${tableName}`));
+                }
+                console.error("Error getting table:", err);
+                return reject(err);
+            }
+            console.log("Number of records deleted: " + result.affectedRows);
+            resolve(result);
+        })
+    })
+}
+
+// update the first given record value to the second value
+function dbUpdateRecord(tableName, records)
+{
+    return new Promise((resolve, reject) =>
+    {
+        const keys = Object.keys(records);
+        const values = Object.values(records);
+        const givenKey = keys[0];
+        const givenValue = values[0];
+        const keyToUpdate = keys[1];
+        const newValue = values[1];
+        if (keys.length < 2)
+        {
+            return reject(new error("At least 2 keys required for an update."));
+        }
+
+        const queryUpdate = `UPDATE ${tableName} SET ${keyToUpdate} = ? WHERE ${givenKey} = ?`;
+        con.query(queryUpdate, [newValue, givenValue], (err, result) => 
+        {
+            if (err)
+            {
+                if (err.code === "ER_NO_SUCH_TABLE")
+                {
+                    return reject(new Error(`There is no such table: ${tableName}`));
+                }
+                console.error("Error getting table:", err);
+                return reject(err);
+            }
+            dbSelectRecord(tableName, givenKey, givenValue).then((updatedRecord) => 
+            {
+                console.log("Number of records updated: " + result.affectedRows);
+                console.log(result);
+                console.log(`Updated record: ${JSON.stringify(updatedRecord[0])}`);
+                resolve(updatedRecord[0]);
+            }).catch(reject);
+        })
+    })
+}
+
+// get all the records from the given table
 function dbGetAllRecords(tableName)
 {
     return new Promise((resolve, reject) =>
@@ -111,13 +194,14 @@ function dbGetAllRecords(tableName)
                 console.error("Error getting table:", err);
                 return reject(err);
             }
+            console.log("All records listed: ");
             console.log(result);
             resolve(result);
         });
     });
 }
 
-// filter data from a table
+// filter records with the given query from the given table
 function dbGetRecordByFilter(tableName, query) 
 {
     return new Promise((resolve, reject) => 
@@ -142,6 +226,7 @@ function dbGetRecordByFilter(tableName, query)
     });
 }
 
+// sort the given table with the given query and return it
 function dbGetAllRecordsSorted(tableName, query) 
 {
     return new Promise((resolve, reject) => 
@@ -164,7 +249,7 @@ function dbGetAllRecordsSorted(tableName, query)
     })
 }
 
-// delete a table as a whole
+// delete the given table as a whole
 function dbDropTable(tableName) 
 {
     return new Promise((resolve, reject) =>
@@ -194,4 +279,7 @@ module.exports =
     dbGetRecordByFilter,
     dbDropTable,
     dbGetAllRecordsSorted,
+    dbDeleteRecord,
+    dbUpdateRecord,
+    dbSelectRecord,
 }

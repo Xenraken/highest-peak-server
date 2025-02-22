@@ -1,4 +1,5 @@
 const con = require("./db-connection");
+const crypto = require("crypto");
 
 // create a database with the given name
 function dbCreate(dbName)
@@ -43,7 +44,7 @@ function dbCreateTable(dbName, tableName)
 {
     return new Promise((resolve, reject) =>
     {
-        const queryTableCreation = `CREATE TABLE IF NOT EXISTS ${dbName}.${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, password VARCHAR(255) NOT NULL)`;
+        const queryTableCreation = `CREATE TABLE IF NOT EXISTS ${dbName}.${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, password VARCHAR(255) NOT NULL, salt VARCHAR(255) NOT NULL)`;
         con.query(queryTableCreation, (err, result) =>
         {
             if (err)
@@ -96,10 +97,9 @@ function dbInsertRecord(tableName, record)
 {
     return new Promise((resolve, reject) => 
     {
-        const parsedRecord = JSON.parse(record);
-        const queryRecordInsertion = `INSERT INTO ${tableName} (name, email, password) VALUES (?, ?, ?)`;
+        const queryRecordInsertion = `INSERT INTO ${tableName} (name, email, password, salt) VALUES (?, ?, ?, ?)`;
 
-        con.query(queryRecordInsertion, [parsedRecord.name, parsedRecord.email, parsedRecord.password], (err, result) => 
+        con.query(queryRecordInsertion, [record.name, record.email, record.password, record.salt], (err, result) => 
         {
             if (err)
             {
@@ -111,7 +111,6 @@ function dbInsertRecord(tableName, record)
         });
     });
 }
-
 
 // delete the record from the given table
 function dbDeleteRecord(tableName, record) 
@@ -249,6 +248,31 @@ function dbGetAllRecordsSorted(tableName, query)
     })
 }
 
+// verify password return true if hashes matches else return false
+function dbVerifyPassword(password, savedHash, savedSalt)
+{
+    return new Promise((resolve, reject) => 
+    {
+        try
+        {
+            const hash = crypto.pbkdf2Sync(password, savedSalt, 100000, 64, "sha512").toString("hex");
+            if (hash === savedHash)
+            {
+                return resolve(true);
+            }
+            else
+            {
+                return resolve(false);
+            }
+        }
+        catch (err)
+        {
+            console.log(err);
+            reject(new Error("Error verifying password."));
+        }
+    })
+}
+
 // delete the given table as a whole
 function dbDropTable(tableName) 
 {
@@ -282,4 +306,5 @@ module.exports =
     dbDeleteRecord,
     dbUpdateRecord,
     dbSelectRecord,
+    dbVerifyPassword,
 }

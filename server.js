@@ -1,6 +1,6 @@
 const { write, rmSync } = require("fs");
 const http = require("http");
-const { userSignUp, userGetAll, userGetByFilter, userGetAllSorted, userDelete, userUpdate } = require("./controllers/user-controller");
+const { userSignUp, userGetAll, userGetByFilter, userGetAllSorted, userDelete, userUpdate, userLogin } = require("./controllers/user-controller");
 const { dbSetup, dbUse, dbDropTable, dbCreate, dbCreateTable } = require("./db/db-operations");
 const con = require("./db/db-connection");
 const { url } = require("inspector");
@@ -22,6 +22,10 @@ const server = http.createServer((req, res) =>
     else if (path === "/signup" && method === "POST")
     {
         userSignUp(req, res, "users");
+    }
+    else if (path === "/login" && method === "POST")
+    {
+        userLogin(req, res, "users");
     }
     else if (path === "/users" && method === "DELETE")
     {
@@ -68,6 +72,8 @@ const server = http.createServer((req, res) =>
         res.end("404 not found: I am not exist.");
     }
 });
+
+// dbDropTable("users");
 
 const PORT = process.env.PORT || 5000;
 

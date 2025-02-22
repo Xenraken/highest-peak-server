@@ -1,5 +1,5 @@
-const { getPostData } = require("../utils/general-utils");
-const { dbInsertRecord, dbGetAllRecords, dbGetRecordByFilter, dbGetAllRecordsSorted, dbDeleteRecord, dbUpdateRecord } = require("../db/db-operations");
+const { getPostData, hashPassword } = require("../utils/general-utils");
+const { dbInsertRecord, dbGetAllRecords, dbGetRecordByFilter, dbGetAllRecordsSorted, dbDeleteRecord, dbUpdateRecord, dbSelectRecord, dbVerifyPassword } = require("../db/db-operations");
 
 
 // signup a new record save user data to db
@@ -13,15 +13,63 @@ async function userSignUp(req, res, tableName)
             res.writeHead(400, { "Content-Type": "application/json" });
             return res.end(JSON.stringify({ message: "Invalid post data" }));
         }
-        await dbInsertRecord(tableName, body);
+
+        const parsedBody = JSON.parse(body);
+        const hashedPassword = await hashPassword(parsedBody.password);
+        parsedBody.password = hashedPassword.hash;
+        parsedBody.salt = hashedPassword.salt;
+
+        await dbInsertRecord(tableName, parsedBody);
+
         res.writeHead(201, { "Content-Type": "application/json" });
-        return res.end(JSON.stringify({ message: "New user Created", user: JSON.parse(body) }));
+        return res.end(JSON.stringify({ message: "New user Created", user: parsedBody }));
     }
     catch (err)
     {
         console.log(err);
         res.writeHead(500, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ message: err.message }));
+    }
+}
+
+// log user in if requirements are met
+async function userLogin(req, res, tableName)
+{
+    try
+    {
+        const body = await getPostData(req);
+        if (!body)
+        {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            return res.end(JSON.stringify({ message: "Invalid post data" }));
+        }
+        const parsedBody = JSON.parse(body);
+        const userRecord = await dbSelectRecord(tableName, "email", parsedBody.email);
+
+        if (userRecord.length === 0) 
+        {
+            res.writeHead(404, { "Content-Type": "application/json" });
+            return res.end(JSON.stringify({ message: "Email not found" }));
+        }
+        const user = userRecord[0];
+        const isPasswordVerified = await dbVerifyPassword(parsedBody.password, user.password, user.salt);
+
+        if (isPasswordVerified)
+        {
+            res.writeHead(302, { "location": "/" });
+            return res.end(JSON.stringify({ message: "Login is successful" }));
+        }
+        else 
+        {
+            res.writeHead(302, { "location": "/login" });
+            return res.end(JSON.stringify({ message: "Login is not successful: Invalid Password" }));
+        }
+    }
+    catch (err) 
+    {
+        console.log(err);
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ message: "An error occurred during login", error: err.message }));
     }
 }
 
@@ -154,4 +202,5 @@ module.exports =
     userGetAllSorted,
     userDelete,
     userUpdate,
+    userLogin,
 }

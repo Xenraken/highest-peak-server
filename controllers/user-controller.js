@@ -61,8 +61,8 @@ async function userLogin(req, res, tableName)
         }
         else 
         {
-            res.writeHead(302, { "location": "/login" });
-            return res.end(JSON.stringify({ message: "Login is not successful: Invalid Password" }));
+            res.writeHead(401, { "Content-Type": "application/json" });
+            return res.end(JSON.stringify({ message: "Invalid Password" }));
         }
     }
     catch (err) 

@@ -1,7 +1,6 @@
 const { getPostData, hashPassword } = require("../utils/general-utils");
 const { dbInsertRecord, dbGetAllRecords, dbGetRecordByFilter, dbGetAllRecordsSorted, dbDeleteRecord, dbUpdateRecord, dbSelectRecord, dbVerifyPassword } = require("../db/db-operations");
 
-
 // signup a new record save user data to db
 async function userSignUp(req, res, tableName)
 {

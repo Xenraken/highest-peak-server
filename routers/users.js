@@ -1,0 +1,54 @@
+const express = require("express");
+const router = express.Router();
+const userController = require("../controllers/user-controller");
+
+router.get("/", (req, res) =>
+{
+    const query = req.query;
+
+    if (Object.keys(query).length > 0)
+    {
+        if (query.id || query.name || query.email || query.password)
+        {
+            userController.userGetByFilter(req, res, "users", query);
+        } else
+        {
+            userController.userGetAllSorted(req, res, "users", query);
+        }
+    } else
+    {
+        userController.userGetAll(req, res, "users");
+    }
+});
+
+router.delete("/", (req, res) => 
+{
+    const query = req.query;
+
+    if (Object.keys(query).length === 0)
+    {
+        return res.status(400).send("400 Bad Request: Invalid query parameters provided.");
+    }
+
+    if (query.id || query.name || query.email || query.password)
+    {
+        userController.userDelete(req, res, "users", query);
+    }
+});
+
+router.patch("/users", (req, res) =>
+{
+    const query = req.query;
+
+    if (!query || Object.keys(query).length < 1)
+    {
+        return res.status(400).send("400 Bad Request: Invalid query parameters provided.");
+    }
+
+    if (Object.keys(query).length < 3)
+    {
+        userController.userUpdate(req, res, "users", query);
+    }
+});
+
+module.exports = router;

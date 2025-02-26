@@ -6,14 +6,13 @@ async function userSignUp(req, res, tableName)
 {
     try
     {
-        const body = await getPostData(req);
-        if (!body)
+        const parsedBody = await req.body;
+        if (!parsedBody)
         {
             res.writeHead(400, { "Content-Type": "application/json" });
             return res.end(JSON.stringify({ message: "Invalid post data" }));
         }
 
-        const parsedBody = JSON.parse(body);
         const hashedPassword = await hashPassword(parsedBody.password);
         parsedBody.password = hashedPassword.hash;
         parsedBody.salt = hashedPassword.salt;
@@ -36,13 +35,12 @@ async function userLogin(req, res, tableName)
 {
     try
     {
-        const body = await getPostData(req);
-        if (!body)
+        const parsedBody = await req.body;
+        if (!parsedBody)
         {
             res.writeHead(400, { "Content-Type": "application/json" });
             return res.end(JSON.stringify({ message: "Invalid post data" }));
         }
-        const parsedBody = JSON.parse(body);
         const userRecord = await dbSelectRecord(tableName, "email", parsedBody.email);
 
         if (userRecord.length === 0) 

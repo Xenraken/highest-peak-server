@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const userController = require("../controllers/user-controller");
+const { userGetAllSorted, userGetByFilter, userGetAll, userDelete, userUpdate } = require("../controllers/user-controller");
+const { authenticateToken } = require("../middlewares/authentication");
 
 router.get("/", (req, res) =>
 {
@@ -10,14 +11,14 @@ router.get("/", (req, res) =>
     {
         if (query.id || query.name || query.email || query.password)
         {
-            userController.userGetByFilter(req, res, "users", query);
+            userGetByFilter(req, res, "users", query);
         } else
         {
-            userController.userGetAllSorted(req, res, "users", query);
+            userGetAllSorted(req, res, "users", query);
         }
     } else
     {
-        userController.userGetAll(req, res, "users");
+        userGetAll(req, res, "users");
     }
 });
 
@@ -32,7 +33,7 @@ router.delete("/", (req, res) =>
 
     if (query.id || query.name || query.email || query.password)
     {
-        userController.userDelete(req, res, "users", query);
+        userDelete(req, res, "users", query);
     }
 });
 
@@ -47,8 +48,9 @@ router.patch("/users", (req, res) =>
 
     if (Object.keys(query).length < 3)
     {
-        userController.userUpdate(req, res, "users", query);
+        userUpdate(req, res, "users", query);
     }
 });
+
 
 module.exports = router;

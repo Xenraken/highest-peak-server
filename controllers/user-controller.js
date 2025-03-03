@@ -1,8 +1,9 @@
-const { getPostData, hashPassword } = require("../utils/general-utils");
+const jwt = require("jsonwebtoken");
+const { hashPassword } = require("../utils/general-utils");
 const { dbInsertRecord, dbGetAllRecords, dbGetRecordByFilter, dbGetAllRecordsSorted, dbDeleteRecord, dbUpdateRecord, dbSelectRecord, dbVerifyPassword } = require("../db/db-operations");
 
 // signup a new record save user data to db
-async function userSignUp(req, res, tableName)
+async function userSignup(req, res, tableName)
 {
     try
     {
@@ -20,7 +21,14 @@ async function userSignUp(req, res, tableName)
         await dbInsertRecord(tableName, parsedBody);
 
         res.writeHead(201, { "Content-Type": "application/json" });
-        return res.end(JSON.stringify({ message: "New user Created", user: parsedBody }));
+        return res.end(JSON.stringify({
+            message: "New user Created", user: {
+                id: parsedBody.id,
+                role: parsedBody.role,
+                name: parsedBody.name,
+                email: parsedBody.email
+            }
+        }));
     }
     catch (err)
     {
@@ -30,7 +38,7 @@ async function userSignUp(req, res, tableName)
     }
 }
 
-// log user in if requirements are met
+// log user in if requirements are met and return a jwt-token to client
 async function userLogin(req, res, tableName)
 {
     try
@@ -41,6 +49,7 @@ async function userLogin(req, res, tableName)
             res.writeHead(400, { "Content-Type": "application/json" });
             return res.end(JSON.stringify({ message: "Invalid post data" }));
         }
+
         const userRecord = await dbSelectRecord(tableName, "email", parsedBody.email);
 
         if (userRecord.length === 0) 
@@ -51,16 +60,22 @@ async function userLogin(req, res, tableName)
         const user = userRecord[0];
         const isPasswordVerified = await dbVerifyPassword(parsedBody.password, user.password, user.salt);
 
-        if (isPasswordVerified)
-        {
-            res.writeHead(302, { "location": "/" });
-            return res.end(JSON.stringify({ message: "Login is successful" }));
-        }
-        else 
+        if (!isPasswordVerified)
         {
             res.writeHead(401, { "Content-Type": "application/json" });
             return res.end(JSON.stringify({ message: "Invalid Password" }));
         }
+
+        const token = jwt.sign(
+            { id: user.id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN }
+        )
+        return res.status(200).json(
+            {
+                message: "Login is successful",
+                token: token
+            });
     }
     catch (err) 
     {
@@ -101,7 +116,13 @@ async function userUpdate(req, res, tableName, query)
     {
         const updatedRecord = await dbUpdateRecord(tableName, query);
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ message: "Updated record:", users: updatedRecord }));
+        res.end(JSON.stringify({
+            message: "Updated record:", users: {
+                id: updatedRecord.id,
+                name: updatedRecord.name,
+                email: updatedRecord.email
+            }
+        }));
     }
     catch (err)
     {
@@ -124,8 +145,9 @@ async function userGetAll(req, res, tableName)
     try
     {
         const records = await dbGetAllRecords(tableName);
+        const mappedRecords = records.map(({ password, salt, ...user }) => user);
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ message: "All users listed:", users: records }));
+        res.end(JSON.stringify({ message: "All users listed:", users: mappedRecords }));
     }
     catch (err)
     {
@@ -148,8 +170,9 @@ async function userGetByFilter(req, res, tableName, query)
     try
     {
         const filteredRecords = await dbGetRecordByFilter(tableName, query);
+        const mappedRecords = filteredRecords.map(({ password, salt, ...user }) => user);
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ message: "Filtered users listed:", users: filteredRecords }));
+        res.end(JSON.stringify({ message: "Filtered users listed:", users: mappedRecords }));
     }
     catch (err)
     {
@@ -173,8 +196,9 @@ async function userGetAllSorted(req, res, tableName, query)
     {
         const sortValue = Object.keys(query)[0];
         const sortedRecords = await dbGetAllRecordsSorted(tableName, sortValue);
+        const mappedRecords = sortedRecords.map(({ password, salt, ...user }) => user);
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ message: `All users sorted by ${sortValue}:`, users: sortedRecords }));
+        res.end(JSON.stringify({ message: `All users sorted by ${sortValue}:`, users: mappedRecords }));
     }
     catch (err) 
     {
@@ -193,7 +217,7 @@ async function userGetAllSorted(req, res, tableName, query)
 
 module.exports =
 {
-    userSignUp,
+    userSignup,
     userGetAll,
     userGetByFilter,
     userGetAllSorted,

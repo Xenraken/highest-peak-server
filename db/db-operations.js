@@ -44,7 +44,13 @@ function dbCreateTable(dbName, tableName)
 {
     return new Promise((resolve, reject) =>
     {
-        const queryTableCreation = `CREATE TABLE IF NOT EXISTS ${dbName}.${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, password VARCHAR(255) NOT NULL, salt VARCHAR(255) NOT NULL)`;
+        const queryTableCreation = `CREATE TABLE IF NOT EXISTS ${dbName}.${tableName} 
+        (id INT AUTO_INCREMENT PRIMARY KEY, 
+        role VARCHAR(255) NOT NULL, 
+        name VARCHAR(255) NOT NULL, 
+        email VARCHAR(255) NOT NULL, 
+        password VARCHAR(255) NOT NULL, 
+        salt VARCHAR(255) NOT NULL)`;
         con.query(queryTableCreation, (err, result) =>
         {
             if (err)
@@ -58,6 +64,34 @@ function dbCreateTable(dbName, tableName)
     });
 }
 
+// create the videos table if not exists
+function dbCreateTableVideos(dbName)
+{
+    return new Promise((resolve, reject) =>
+    {
+        const queryTableVideosCreation = `CREATE TABLE IF NOT EXISTS ${dbName}.videos 
+        (id INT AUTO_INCREMENT PRIMARY KEY, 
+        user_id INT NOT NULL, 
+        title VARCHAR(255) NOT NULL, 
+        description TEXT, 
+        file_name VARCHAR(255) NOT NULL, 
+        file_path VARCHAR(500) NOT NULL, 
+        upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+        views INT DEFAULT 0,
+        FOREIGN KEY (user_id) REFERENCES ${dbName}.users(id) ON DELETE CASCADE)`;
+        con.query(queryTableVideosCreation, (err, result) =>
+        {
+            if (err)
+            {
+                console.error("Error creating table: videos", err);
+                return reject(err);
+            }
+            console.log("Table created: videos");
+            resolve(result);
+        });
+    });
+}
+
 // call dbCreate and dbCreateTable (needed for global asyncing)
 async function dbSetup(dbName, tableName)
 {
@@ -66,6 +100,7 @@ async function dbSetup(dbName, tableName)
         await dbCreate(dbName);
         await dbUse(dbName);
         await dbCreateTable(dbName, tableName);
+        await dbCreateTableVideos(dbName);
         console.log("Database and table setup is successful");
 
     } catch (err)
@@ -97,16 +132,44 @@ function dbInsertRecord(tableName, record)
 {
     return new Promise((resolve, reject) => 
     {
-        const queryRecordInsertion = `INSERT INTO ${tableName} (name, email, password, salt) VALUES (?, ?, ?, ?)`;
+        const queryRecordInsertion = `INSERT INTO ${tableName} (role, name, email, password, salt) VALUES (?, ?, ?, ?, ?)`;
 
-        con.query(queryRecordInsertion, [record.name, record.email, record.password, record.salt], (err, result) => 
+        con.query(queryRecordInsertion, [record.role, record.name, record.email, record.password, record.salt], (err, result) => 
         {
             if (err)
             {
-                console.error("Error inserting data:", err);
+                console.error("Error inserting data to users table:", err);
                 return reject(err);
             }
-            console.log(`1 record inserted ${JSON.stringify(result)}`);
+            console.log(`1 record inserted to users table ${JSON.stringify(result)}`);
+            resolve(result);
+        });
+    });
+}
+
+// insert the given video record to the given table
+function dbInsertVideoRecord(tableName, record)
+{
+    return new Promise((resolve, reject) =>
+    {
+        const queryVideoRecordInsertion = `INSERT INTO ${tableName} (user_id, title, 
+        description, 
+        file_name, 
+        file_path, 
+        upload_date, 
+        views) 
+        VALUES (?, ?, ?, ?, ?, NOW(), 0)`;
+
+        const values = [record.body.user_id, record.body.title, record.body.description, record.videoFile.filename, record.videoFile.path]
+
+        con.query(queryVideoRecordInsertion, values, (err, result) => 
+        {
+            if (err)
+            {
+                console.error("Error inserting data to videos table:", err);
+                return reject(err);
+            }
+            console.log(`1 record inserted to videos table ${JSON.stringify(result)}`);
             resolve(result);
         });
     });
@@ -297,8 +360,10 @@ module.exports =
     dbCreate,
     dbUse,
     dbCreateTable,
+    dbCreateTableVideos,
     dbSetup,
     dbInsertRecord,
+    dbInsertVideoRecord,
     dbGetAllRecords,
     dbGetRecordByFilter,
     dbDropTable,

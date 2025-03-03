@@ -39,6 +39,8 @@ async function hashPassword(password)
     return { salt, hash };
 }
 
+
+
 module.exports =
 {
     getPostData,

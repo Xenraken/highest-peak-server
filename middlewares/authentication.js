@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 
-function authenticateToken(req, res, next)
+function verifyToken(req, res, next)
 {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
@@ -22,7 +22,9 @@ function authenticateToken(req, res, next)
     });
 }
 
+
+
 module.exports =
 {
-    authenticateToken,
+    verifyToken,
 }

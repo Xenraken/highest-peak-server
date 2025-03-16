@@ -67,7 +67,7 @@ async function userLogin(req, res, tableName)
         }
 
         const token = jwt.sign(
-            { id: user.id, email: user.email },
+            { id: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN }
         )
@@ -114,15 +114,27 @@ async function userUpdate(req, res, tableName, query)
 {
     try
     {
-        const updatedRecord = await dbUpdateRecord(tableName, query);
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-            message: "Updated record:", users: {
-                id: updatedRecord.id,
-                name: updatedRecord.name,
-                email: updatedRecord.email
-            }
-        }));
+        const user = req.user;
+        if (!user || !user.id || !user.role)
+        {
+            return res.status(401).json({ message: "Unauthorized: Invalid token" });
+        }
+
+        if (req.user.role === "admin" || req.user.id == query.id)
+        {
+            const updatedRecord = await dbUpdateRecord(tableName, query);
+            res.writeHead(200, { "Content-Type": "application/json" });
+            return res.end(JSON.stringify({
+                message: "Updated record:", users: {
+                    id: updatedRecord.id,
+                    name: updatedRecord.name,
+                    email: updatedRecord.email
+                }
+            }));
+        }
+
+        return res.status(403).json({ message: "Unauthorized: Can not update other users." });
+
     }
     catch (err)
     {

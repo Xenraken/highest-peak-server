@@ -196,8 +196,8 @@ function dbDeleteRecord(tableName, record)
             }
             console.log("Number of records deleted: " + result.affectedRows);
             resolve(result);
-        })
-    })
+        });
+    });
 }
 
 // update the first given record value to the second value
@@ -235,8 +235,8 @@ function dbUpdateRecord(tableName, records)
                 console.log(`Updated record: ${JSON.stringify(updatedRecord[0])}`);
                 resolve(updatedRecord[0]);
             }).catch(reject);
-        })
-    })
+        });
+    });
 }
 
 // get all the records from the given table

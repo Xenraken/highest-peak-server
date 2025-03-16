@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { userGetAllSorted, userGetByFilter, userGetAll, userDelete, userUpdate } = require("../controllers/user-controller");
-const { authenticateToken } = require("../middlewares/authentication");
+const { authenticateToken, verifyToken } = require("../middlewares/authentication");
 
 router.get("/", (req, res) =>
 {
@@ -37,7 +37,7 @@ router.delete("/", (req, res) =>
     }
 });
 
-router.patch("/users", (req, res) =>
+router.patch("/", verifyToken, (req, res) =>
 {
     const query = req.query;
 

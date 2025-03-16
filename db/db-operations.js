@@ -133,7 +133,6 @@ function dbInsertRecord(tableName, record)
     return new Promise((resolve, reject) => 
     {
         const queryRecordInsertion = `INSERT INTO ${tableName} (role, name, email, password, salt) VALUES (?, ?, ?, ?, ?)`;
-
         con.query(queryRecordInsertion, [record.role, record.name, record.email, record.password, record.salt], (err, result) => 
         {
             if (err)

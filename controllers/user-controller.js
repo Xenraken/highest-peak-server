@@ -18,6 +18,8 @@ async function userSignup(req, res, tableName)
         parsedBody.password = hashedPassword.hash;
         parsedBody.salt = hashedPassword.salt;
 
+        record.role = "user";
+        
         await dbInsertRecord(tableName, parsedBody);
 
         res.writeHead(201, { "Content-Type": "application/json" });
@@ -120,6 +122,11 @@ async function userUpdate(req, res, tableName, query)
             return res.status(401).json({ message: "Unauthorized: Invalid token" });
         }
 
+        if (query.role) 
+        {
+            return res.status(403).json({ message: "Unauthorize: Roles can not be updated." });
+        }
+
         if (req.user.role === "admin" || req.user.id == query.id)
         {
             const updatedRecord = await dbUpdateRecord(tableName, query);
@@ -132,9 +139,7 @@ async function userUpdate(req, res, tableName, query)
                 }
             }));
         }
-
         return res.status(403).json({ message: "Unauthorized: Can not update other users." });
-
     }
     catch (err)
     {

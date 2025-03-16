@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { hashPassword } = require("../utils/general-utils");
 const { dbInsertRecord, dbGetAllRecords, dbGetRecordByFilter, dbGetAllRecordsSorted, dbDeleteRecord, dbUpdateRecord, dbSelectRecord, dbVerifyPassword } = require("../db/db-operations");
+const { parse } = require("dotenv");
 
 // signup a new record save user data to db
 async function userSignup(req, res, tableName)
@@ -18,7 +19,7 @@ async function userSignup(req, res, tableName)
         parsedBody.password = hashedPassword.hash;
         parsedBody.salt = hashedPassword.salt;
 
-        record.role = "user";
+        parsedBody.role = "user";
         
         await dbInsertRecord(tableName, parsedBody);
 
@@ -124,10 +125,10 @@ async function userUpdate(req, res, tableName, query)
 
         if (query.role) 
         {
-            return res.status(403).json({ message: "Unauthorize: Roles can not be updated." });
+            return res.status(403).json({ message: "Unauthorize: Roles can not be updated" });
         }
-
-        if (req.user.role === "admin" || req.user.id == query.id)
+        
+        if (req.user.role === "admin" || req.user.id === parseInt(query.id))
         {
             const updatedRecord = await dbUpdateRecord(tableName, query);
             res.writeHead(200, { "Content-Type": "application/json" });
@@ -139,7 +140,7 @@ async function userUpdate(req, res, tableName, query)
                 }
             }));
         }
-        return res.status(403).json({ message: "Unauthorized: Can not update other users." });
+        return res.status(403).json({ message: "Unauthorized: Can not update other users" });
     }
     catch (err)
     {

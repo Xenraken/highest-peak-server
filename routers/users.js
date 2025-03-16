@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const { userGetAllSorted, userGetByFilter, userGetAll, userDelete, userUpdate } = require("../controllers/user-controller");
 const { authenticateToken, verifyToken } = require("../middlewares/authentication");
+const { allowAdmin } = require("../middlewares/allow-admin");
 
-router.get("/", (req, res) =>
+router.get("/", verifyToken, allowAdmin, (req, res) =>
 {
     const query = req.query;
 
@@ -22,13 +23,13 @@ router.get("/", (req, res) =>
     }
 });
 
-router.delete("/", (req, res) => 
+router.delete("/", verifyToken, allowAdmin, (req, res) => 
 {
     const query = req.query;
 
     if (Object.keys(query).length === 0)
     {
-        return res.status(400).send("400 Bad Request: Invalid query parameters provided.");
+        return res.status(400).send("400 Bad Request: Invalid query parameters provided");
     }
 
     if (query.id || query.name || query.email || query.password)
@@ -43,7 +44,7 @@ router.patch("/", verifyToken, (req, res) =>
 
     if (!query || Object.keys(query).length < 1)
     {
-        return res.status(400).send("400 Bad Request: Invalid query parameters provided.");
+        return res.status(400).send("400 Bad Request: Invalid query parameters provided");
     }
 
     if (Object.keys(query).length < 3)

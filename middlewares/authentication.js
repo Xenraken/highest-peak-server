@@ -1,5 +1,7 @@
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+
+
 function verifyToken(req, res, next)
 {
     const authHeader = req.headers["authorization"];
@@ -7,7 +9,7 @@ function verifyToken(req, res, next)
 
     if (!token)
     {
-        return res.status(401).json({ message: "Access denied. No token provided." });
+        return res.status(401).json({ message: "Access denied: No token provided" });
     }
 
     jwt.verify(token, process.env.JWT_SECRET, (err, user) =>
@@ -21,7 +23,6 @@ function verifyToken(req, res, next)
         next();
     });
 }
-
 
 
 module.exports =

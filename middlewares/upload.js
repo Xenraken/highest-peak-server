@@ -20,11 +20,11 @@ const fileFilter = (req, file, cb) =>
         cb(null, true);
     } else
     {
-        cb(new Error("Only video files are allowed!"), false);
+        cb(new Error("Only video files are allowed"), false);
     }
 };
 
 const upload = multer({ storage: storage, fileFilter: fileFilter, limits: { fieldSize: Infinity } });
 
 
-module.exports = upload;
+module.exports = { upload: upload.single("video") }

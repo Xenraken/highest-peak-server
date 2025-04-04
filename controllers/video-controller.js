@@ -1,4 +1,5 @@
-const { dbInsertVideoRecord } = require("../db/db-operations");
+const { dbInsertVideoRecord, dbDeleteVideoRecord, dbGetAllRecords, dbGetRecordByFilterValue } = require("../db/db-operations");
+const { getVideos, getSingleVideo } = require("../utils/general-utils");
 const fs = require("fs");
 const path = require("path");
 
@@ -23,7 +24,6 @@ async function videoUpload(req, res)
             body: body,
             videoFile: videoFile
         }
-
         await dbInsertVideoRecord("videos", record);
         return res.status(201).json({ message: "File upload is successful", record });
     }
@@ -48,23 +48,67 @@ async function videoDelete(req, res)
             return res.status(404).json({ message: "File not found" });
         }
 
-        fs.unlink(filePath, (err) =>
+        fs.unlink(filePath, async (err) =>
         {
             if (err)
             {
                 console.error("Error deleting file:", err);
                 return res.status(500).json({ message: "Error deleting file" });
             }
-
+            await dbDeleteVideoRecord("videos", filename);
             res.status(200).json({ message: "File deleted successfully" });
         });
 
-    } catch (err) 
+    }
+    catch (err) 
     {
         console.error("Video deleting error:", err);
         return res.status(500).json({ message: "An error occurred during video upload", error: err.message });
     }
+}
 
+async function videoGetAll(req, res, tableName) 
+{
+    try
+    {
+        const videoFiles = await getVideos(path.join(__dirname, '..', 'uploads'));
+        const dbVideoRecords = await dbGetAllRecords("videos");
+
+        const videos = videoFiles.map((file) => 
+        {
+            const record = dbVideoRecords.find((record) => 
+            {
+                return file.name === record.file_name;
+            });
+
+            return record ? { ...file, ...record } : null;
+        }).filter(Boolean);
+
+        return res.status(200).json({ videos });
+    }
+    catch (err) 
+    {
+        console.error("Error getting all videos:", err);
+        return res.status(500).json({ message: "Error getting all videos", error: err.message });
+    }
+}
+
+async function videoGet(req, res) 
+{
+    try 
+    {
+        const fileName = req.params.fileName;
+        const dbVideoRecord = await dbGetRecordByFilterValue("videos", "file_name", fileName);
+        const videoBuffer = await getSingleVideo(path.join(__dirname, '..', 'uploads'), fileName);
+        
+        res.setHeader("Content-type", "video/mp4");
+        return res.send(videoBuffer);
+    }
+    catch (err) 
+    {
+        console.error("Error getting video:", err);
+        return res.status(500).json({ message: "Error getting video", error: err.message });
+    }
 }
 
 
@@ -72,4 +116,6 @@ module.exports =
 {
     videoUpload,
     videoDelete,
+    videoGetAll,
+    videoGet,
 }

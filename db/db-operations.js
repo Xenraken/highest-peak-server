@@ -158,7 +158,6 @@ function dbInsertVideoRecord(tableName, record)
         upload_date, 
         views) 
         VALUES (?, ?, ?, ?, ?, NOW(), 0)`;
-
         const values = [record.body.user_id, record.body.title, record.body.description, record.videoFile.filename, record.videoFile.path]
 
         con.query(queryVideoRecordInsertion, values, (err, result) => 
@@ -193,6 +192,32 @@ function dbDeleteRecord(tableName, record)
                 console.error("Error getting table:", err);
                 return reject(err);
             }
+            console.log(`Record has been deleted from ${tableName}`);
+            console.log("Number of records deleted: " + result.affectedRows);
+            resolve(result);
+        });
+    });
+}
+
+// delete the video record with the given table name and filename
+
+function dbDeleteVideoRecord(tableName, filename) 
+{
+    return new Promise((resolve, reject) => 
+    {
+        const queryDeleteVideoQuery = `DELETE FROM ${tableName} WHERE file_name = ?`;
+        con.query(queryDeleteVideoQuery, [filename], (err, result) => 
+        {
+            if (err)
+            {
+                if (err.code === "ER_NO_SUCH_TABLE")
+                {
+                    return reject(new Error(`There is no such table: ${tableName}`));
+                }
+                console.error("Error getting table:", err);
+                return reject(err);
+            }
+            console.log(`Record has been deleted from ${tableName}`);
             console.log("Number of records deleted: " + result.affectedRows);
             resolve(result);
         });
@@ -287,6 +312,29 @@ function dbGetRecordByFilter(tableName, query)
     });
 }
 
+// filter records with the given key-value pair from the given tablename
+function dbGetRecordByFilterValue(tableName, key, value) 
+{
+    return new Promise((resolve, reject) => 
+    {
+        const queryGetRecordByFilter = `SELECT * FROM ${tableName} WHERE ${key} = ?`;
+        con.query(queryGetRecordByFilter, [value], (err, result) => 
+        {
+            if (err) 
+            {
+                if (err.code === "ER_NO_SUCH_TABLE")
+                {
+                    return reject(new Error(`There is no such table: ${tableName}`));
+                }
+                console.error("Error getting record by filter", err);
+                return reject(err);
+            }
+            console.log(result);
+            resolve(result);
+        });
+    });
+}
+
 // sort the given table with the given query and return it
 function dbGetAllRecordsSorted(tableName, query) 
 {
@@ -365,9 +413,11 @@ module.exports =
     dbInsertVideoRecord,
     dbGetAllRecords,
     dbGetRecordByFilter,
+    dbGetRecordByFilterValue,
     dbDropTable,
     dbGetAllRecordsSorted,
     dbDeleteRecord,
+    dbDeleteVideoRecord,
     dbUpdateRecord,
     dbSelectRecord,
     dbVerifyPassword,

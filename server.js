@@ -9,6 +9,7 @@ require("dotenv").config();
 const con = require("./db/db-connection");
 const { dbSetup, dbDropTable } = require("./db/db-operations");
 // routers
+const home = require("./routers/home");
 const users = require("./routers/users");
 const auth = require("./routers/auth");
 const videos = require("./routers/videos");
@@ -16,15 +17,11 @@ const videos = require("./routers/videos");
 
 dbSetup("mydb", "users");
 
-app.get("/", (req, res) => 
-{
-    res.status(200).send("Hello, I am the home page.");
-});
 
-app.use("/auth", auth);
-app.use("/users", users);
 app.use("/videos", videos);
-
+app.use("/users", users);
+app.use("/auth", auth);
+app.use("/", home);
 app.use((req, res) =>
 {
     res.status(404).send("404 not found: I am not exist.");

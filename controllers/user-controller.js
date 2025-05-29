@@ -9,7 +9,7 @@ async function userSignup(req, res, tableName)
     try
     {
         const parsedBody = await req.body;
-        if (!parsedBody)
+        if (!parsedBody || !parsedBody.name || !parsedBody.email || !parsedBody.password)
         {
             res.writeHead(400, { "Content-Type": "application/json" });
             return res.end(JSON.stringify({ message: "Invalid post data" }));
@@ -20,7 +20,7 @@ async function userSignup(req, res, tableName)
         parsedBody.salt = hashedPassword.salt;
 
         parsedBody.role = "user";
-        
+
         await dbInsertRecord(tableName, parsedBody);
 
         res.writeHead(201, { "Content-Type": "application/json" });
@@ -127,7 +127,7 @@ async function userUpdate(req, res, tableName, query)
         {
             return res.status(403).json({ message: "Unauthorize: Roles can not be updated" });
         }
-        
+
         if (req.user.role === "admin" || req.user.id === parseInt(query.id))
         {
             const updatedRecord = await dbUpdateRecord(tableName, query);

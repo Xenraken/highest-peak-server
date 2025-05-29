@@ -13,11 +13,12 @@ const home = require("./routers/home");
 const users = require("./routers/users");
 const auth = require("./routers/auth");
 const videos = require("./routers/videos");
+const cors = require("cors");
 
 
 dbSetup("mydb", "users");
 
-
+app.use(cors());
 app.use("/videos", videos);
 app.use("/users", users);
 app.use("/auth", auth);

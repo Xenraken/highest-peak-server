@@ -72,7 +72,7 @@ async function videoGetAll(req, res, tableName)
     try
     {
         const videoFiles = await getVideos(path.join(__dirname, '..', 'uploads'));
-        const dbVideoRecords = await dbGetAllRecords("videos");
+        const dbVideoRecords = await dbGetAllRecords(tableName);
 
         const videos = videoFiles.map((file) => 
         {
@@ -100,7 +100,7 @@ async function videoGet(req, res)
         const fileName = req.params.fileName;
         const dbVideoRecord = await dbGetRecordByFilterValue("videos", "file_name", fileName);
         const videoBuffer = await getSingleVideo(path.join(__dirname, '..', 'uploads'), fileName);
-        
+
         res.setHeader("Content-type", "video/mp4");
         return res.send(videoBuffer);
     }
@@ -110,7 +110,24 @@ async function videoGet(req, res)
         return res.status(500).json({ message: "Error getting video", error: err.message });
     }
 }
-
+async function videoGetByUserID(req, res, query) 
+{
+    try
+    {
+        if (!query.id)
+        {
+            console.error("Error getting videos associated with this user ID");
+            return res.status(400).json({ message: "User ID not found" });
+        }
+        const dbVideoRecords = await dbGetRecordByFilterValue("videos", "user_id", query.id);
+        return res.status(200).json({ dbVideoRecords });
+    }
+    catch (err) 
+    {
+        console.error("Error getting video by ID:", err);
+        return res.status(500).json({ message: "Error getting video", error: err.message });
+    }
+}
 
 module.exports =
 {
@@ -118,4 +135,5 @@ module.exports =
     videoDelete,
     videoGetAll,
     videoGet,
+    videoGetByUserID
 }

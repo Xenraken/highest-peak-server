@@ -13,11 +13,13 @@ router.get("/", verifyToken, allowAdmin, (req, res) =>
         if (query.id || query.name || query.email || query.password)
         {
             userGetByFilter(req, res, "users", query);
-        } else
+        }
+        else
         {
             userGetAllSorted(req, res, "users", query);
         }
-    } else
+    }
+    else
     {
         userGetAll(req, res, "users");
     }

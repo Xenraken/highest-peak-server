@@ -12,7 +12,7 @@ async function userSignup(req, res, tableName)
         if (!parsedBody || !parsedBody.name || !parsedBody.email || !parsedBody.password)
         {
             res.writeHead(400, { "Content-Type": "application/json" });
-            return res.end(JSON.stringify({ message: "Invalid post data" }));
+            return res.end(JSON.stringify({ message: "All fields must be filled" }));
         }
 
         const hashedPassword = await hashPassword(parsedBody.password);
@@ -47,10 +47,10 @@ async function userLogin(req, res, tableName)
     try
     {
         const parsedBody = await req.body;
-        if (!parsedBody)
+        if (!parsedBody || !parsedBody.email || !parsedBody.password)
         {
             res.writeHead(400, { "Content-Type": "application/json" });
-            return res.end(JSON.stringify({ message: "Invalid post data" }));
+            return res.end(JSON.stringify({ message: "Email and password fields must be filled" }));
         }
 
         const userRecord = await dbSelectRecord(tableName, "email", parsedBody.email);
@@ -58,7 +58,7 @@ async function userLogin(req, res, tableName)
         if (userRecord.length === 0) 
         {
             res.writeHead(404, { "Content-Type": "application/json" });
-            return res.end(JSON.stringify({ message: "Email not found" }));
+            return res.end(JSON.stringify({ message: "No account has been found with this email" }));
         }
         const user = userRecord[0];
         const isPasswordVerified = await dbVerifyPassword(parsedBody.password, user.password, user.salt);
@@ -66,7 +66,7 @@ async function userLogin(req, res, tableName)
         if (!isPasswordVerified)
         {
             res.writeHead(401, { "Content-Type": "application/json" });
-            return res.end(JSON.stringify({ message: "Invalid Password" }));
+            return res.end(JSON.stringify({ message: "Incorrect password" }));
         }
 
         const token = jwt.sign(
@@ -76,7 +76,9 @@ async function userLogin(req, res, tableName)
         )
         return res.status(200).json(
             {
-                message: "Login is successful",
+                message: "Login successful",
+                name: user.name,
+                id:user.id,
                 token: token
             });
     }

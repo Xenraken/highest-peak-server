@@ -50,7 +50,7 @@ async function getVideos(videoUploadPath)
     {
         if (!videoUploadPath)
         {
-            throw new Error("Error getting videos: Invalid upload path");
+            throw new Error("Error getting videos: Invalid path");
         }
 
         const files = await fs.readdir(videoUploadPath);

@@ -1,3 +1,4 @@
+const { userInfo } = require("os");
 const { dbInsertVideoRecord, dbDeleteVideoRecord, dbGetAllRecords, dbGetRecordByFilterValue } = require("../db/db-operations");
 const { getVideos, getSingleVideo } = require("../utils/general-utils");
 const fs = require("fs");
@@ -79,12 +80,13 @@ async function videoGetAll(req, res, tableName)
             const record = dbVideoRecords.find((record) => 
             {
                 return file.name === record.file_name;
+
             });
 
             return record ? { ...file, ...record } : null;
         }).filter(Boolean);
 
-        return res.status(200).json({ videos });
+        return res.status(200).json({ message: "All video records listed", videos });
     }
     catch (err) 
     {
@@ -93,6 +95,7 @@ async function videoGetAll(req, res, tableName)
     }
 }
 
+// get the physical video with the given url param
 async function videoGet(req, res) 
 {
     try 
@@ -110,6 +113,24 @@ async function videoGet(req, res)
         return res.status(500).json({ message: "Error getting video", error: err.message });
     }
 }
+
+// get a single video data with the given url param
+async function videoGetData(req, res)
+{
+    try 
+    {
+        const fileName = req.params.fileName;
+        const dbVideoRecord = await dbGetRecordByFilterValue("videos", "file_name", fileName);
+
+        return res.status(200).json({ message: "Video data:", dbVideoRecord });
+    }
+    catch (err) 
+    {
+        console.error("Error getting video data:", err);
+        return res.status(500).json({ message: "Error getting video data", error: err.message });
+    }
+}
+
 async function videoGetByUserID(req, res, query) 
 {
     try
@@ -120,7 +141,8 @@ async function videoGetByUserID(req, res, query)
             return res.status(400).json({ message: "User ID not found" });
         }
         const dbVideoRecords = await dbGetRecordByFilterValue("videos", "user_id", query.id);
-        return res.status(200).json({ dbVideoRecords });
+        console.log(`All record listed by user ID: ${query.id}:`, dbVideoRecords);
+        return res.status(200).json({ message: `All record listed by user ID: ${query.id}:`, dbVideoRecords });
     }
     catch (err) 
     {
@@ -135,5 +157,6 @@ module.exports =
     videoDelete,
     videoGetAll,
     videoGet,
-    videoGetByUserID
+    videoGetByUserID,
+    videoGetData
 }

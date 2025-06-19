@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { upload } = require("../middlewares/upload");
-const { videoUpload, videoDelete, videoGetAll, videoGet, videoGetByUserID } = require("../controllers/video-controller");
+const { videoUpload, videoDelete, videoGetAll, videoGet, videoGetByUserID, videoGetData } = require("../controllers/video-controller");
 const { verifyToken } = require("../middlewares/authentication");
 const path = require("path");
 const { allowAdmin } = require("../middlewares/allow-admin");
@@ -18,7 +18,6 @@ router.get("/", (req, res) =>
     {
         videoGetAll(req, res, "videos");
     }
-
 });
 
 router.get("/:fileName", (req, res) => 
@@ -26,7 +25,12 @@ router.get("/:fileName", (req, res) =>
     videoGet(req, res);
 });
 
-router.post("/upload", verifyToken, allowAdmin, upload, videoUpload);
+router.get("/data/:fileName", (req, res) => 
+{
+    videoGetData(req, res);
+});
+
+router.post("/upload", upload, videoUpload);
 
 router.delete("/:filename", videoDelete);
 

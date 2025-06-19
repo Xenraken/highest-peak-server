@@ -4,7 +4,7 @@ const { userGetAllSorted, userGetByFilter, userGetAll, userDelete, userUpdate } 
 const { authenticateToken, verifyToken } = require("../middlewares/authentication");
 const { allowAdmin } = require("../middlewares/allow-admin");
 
-router.get("/", verifyToken, allowAdmin, (req, res) =>
+router.get("/", (req, res) =>
 {
     const query = req.query;
 

@@ -9,6 +9,7 @@ function verifyToken(req, res, next)
 
     if (!token)
     {
+        console.log("Access denied: No token privided");
         return res.status(401).json({ message: "Access denied: No token provided" });
     }
 

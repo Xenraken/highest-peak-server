@@ -30,9 +30,9 @@ router.get("/data/:fileName", (req, res) =>
     videoGetData(req, res);
 });
 
-router.post("/upload", allowAdmin, verifyToken, upload, videoUpload);
+router.post("/upload", verifyToken, upload, videoUpload);
 
-router.delete("/:filename", allowAdmin, verifyToken, videoDelete);
+router.delete("/:filename", verifyToken, videoDelete);
 
 
 module.exports = router;

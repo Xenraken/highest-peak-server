@@ -78,7 +78,8 @@ async function userLogin(req, res, tableName)
             {
                 message: "Login successful",
                 name: user.name,
-                id:user.id,
+                id: user.id,
+                role: user.role,
                 token: token
             });
     }

@@ -61,10 +61,12 @@ function dbCreateTableVideos(dbName) {
         title VARCHAR(255) NOT NULL, 
         description TEXT, 
         file_name VARCHAR(255) NOT NULL, 
-        file_path VARCHAR(500) NOT NULL, 
+        file_path VARCHAR(500) NOT NULL,
+        thumbnail_path VARCHAR(255), 
         upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
         views INT DEFAULT 0,
-        FOREIGN KEY (user_id) REFERENCES ${dbName}.users(id) ON DELETE CASCADE)`;
+        FOREIGN KEY (user_id) REFERENCES ${dbName}.users(id) ON DELETE CASCADE
+        )`;
     con.query(queryTableVideosCreation, (err, result) => {
       if (err) {
         console.error("Error creating table: videos", err);
@@ -128,19 +130,25 @@ function dbInsertRecord(tableName, record) {
 // insert the given video record to the given table
 function dbInsertVideoRecord(tableName, record) {
   return new Promise((resolve, reject) => {
-    const queryVideoRecordInsertion = `INSERT INTO ${tableName} (user_id, title, 
-        description, 
-        file_name, 
-        file_path, 
-        upload_date, 
-        views) 
-        VALUES (?, ?, ?, ?, ?, NOW(), 0)`;
+    const queryVideoRecordInsertion = `INSERT INTO ${tableName} (
+        user_id,
+        title,
+        description,
+        file_name,
+        file_path,
+        thumbnail_path,
+        upload_date,
+        views)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
     const values = [
       record.body.user_id,
       record.body.title,
       record.body.description,
       record.videoFile.filename,
       record.videoFile.path,
+      record.thumbnailPath,
+      new Date(),
+      0
     ];
 
     con.query(queryVideoRecordInsertion, values, (err, result) => {

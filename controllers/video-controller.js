@@ -19,7 +19,8 @@ async function videoUpload(req, res) {
         const record =
         {
             body: body,
-            videoFile: videoFile
+            videoFile: videoFile,
+            thumbnailPath: req.thumbnailPath
         }
         await dbInsertVideoRecord("videos", record);
         return res.status(201).json({ message: "File upload is successful", record });

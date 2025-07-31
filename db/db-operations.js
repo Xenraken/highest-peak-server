@@ -38,9 +38,10 @@ function dbCreateTable(dbName, tableName) {
         (id INT AUTO_INCREMENT PRIMARY KEY, 
         role VARCHAR(255) NOT NULL, 
         name VARCHAR(255) NOT NULL, 
-        email VARCHAR(255) NOT NULL, 
+        email VARCHAR(255) NOT NULL UNIQUE, 
         password VARCHAR(255) NOT NULL, 
-        salt VARCHAR(255) NOT NULL)`;
+        salt VARCHAR(255) NOT NULL,
+        creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`;
     con.query(queryTableCreation, (err, result) => {
       if (err) {
         console.error(`Error creating table: ${tableName}`, err);
@@ -78,6 +79,32 @@ function dbCreateTableVideos(dbName) {
   });
 }
 
+// create the comments table if not exists
+function dbCreateTableComments(dbName) {
+  return new Promise((resolve, reject) => {
+    const queryTableCommentsCreation = `
+    CREATE TABLE IF NOT EXISTS ${dbName}.comments 
+    (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    video_id INT NOT NULL,
+    user_name VARCHAR(255) NOT NULL,
+    comment VARCHAR(255) NOT NULL,
+    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES ${dbName}.users(id) ON DELETE CASCADE,
+    FOREIGN KEY (video_id) REFERENCES ${dbName}.videos(id) ON DELETE CASCADE
+    )`;
+    con.query(queryTableCommentsCreation, (err, result) => {
+      if (err) {
+        console.error("Error creating table: comments", err);
+        return reject(err);
+      }
+      console.log("Table created: comments");
+      resolve(result);
+    })
+  })
+}
+
 // call dbCreate and dbCreateTable (needed for global asyncing)
 async function dbSetup(dbName, tableName) {
   try {
@@ -85,6 +112,7 @@ async function dbSetup(dbName, tableName) {
     await dbUse(dbName);
     await dbCreateTable(dbName, tableName);
     await dbCreateTableVideos(dbName);
+    await dbCreateTableComments(dbName)
     console.log("Database and table setup is successful");
   }
   catch (err) {
@@ -109,10 +137,25 @@ function dbSelectRecord(tableName, key, value) {
 // insert the given record to the given table
 function dbInsertRecord(tableName, record) {
   return new Promise((resolve, reject) => {
-    const queryRecordInsertion = `INSERT INTO ${tableName} (role, name, email, password, salt) VALUES (?, ?, ?, ?, ?)`;
+    const queryRecordInsertion = `INSERT INTO ${tableName} (
+      role,
+      name,
+      email,
+      password,
+      salt,
+      creation_date)
+      VALUES (?, ?, ?, ?, ?, ?)`;
+    const values = [
+      record.role,
+      record.name,
+      record.email,
+      record.password,
+      record.salt,
+      new Date()
+    ]
     con.query(
       queryRecordInsertion,
-      [record.role, record.name, record.email, record.password, record.salt],
+      values,
       (err, result) => {
         if (err) {
           console.error("Error inserting data to users table:", err);
@@ -131,15 +174,15 @@ function dbInsertRecord(tableName, record) {
 function dbInsertVideoRecord(tableName, record) {
   return new Promise((resolve, reject) => {
     const queryVideoRecordInsertion = `INSERT INTO ${tableName} (
-        user_id,
-        title,
-        description,
-        file_name,
-        file_path,
-        thumbnail_path,
-        upload_date,
-        views)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+      user_id,
+      title,
+      description,
+      file_name,
+      file_path,
+      thumbnail_path,
+      upload_date,
+      views)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
     const values = [
       record.body.user_id,
       record.body.title,
@@ -156,9 +199,35 @@ function dbInsertVideoRecord(tableName, record) {
         console.error("Error inserting data to videos table:", err);
         return reject(err);
       }
-      console.log(
-        `1 record inserted to videos table ${JSON.stringify(result)}`
-      );
+      console.log(`1 record inserted to videos table ${JSON.stringify(result)}`);
+      resolve(result);
+    });
+  });
+}
+
+// insert the given comment record to comment table
+function dbInsertCommentRecord(record) {
+  return new Promise((resolve, reject) => {
+    const queryCommentRecordInsertion = `INSERT INTO comments (
+      user_id,
+      video_id,
+      user_name,
+      comment,
+      upload_date) 
+      VALUES(?, ?, ?, ?, ?)`;
+    const values = [
+      record.userId,
+      record.videoId,
+      record.userName,
+      record.comment,
+      new Date()
+    ];
+    con.query(queryCommentRecordInsertion, values, (err, result) => {
+      if (err) {
+        console.error("Error inserting data to comments table:", err)
+        return reject(err);
+      }
+      console.log(`1 record inserted to comments table ${JSON.stringify(result)}`)
       resolve(result);
     });
   });
@@ -186,7 +255,6 @@ function dbDeleteRecord(tableName, record) {
 }
 
 // delete the video record with the given table name and filename
-
 function dbDeleteVideoRecord(tableName, filename) {
   return new Promise((resolve, reject) => {
     const queryDeleteVideoQuery = `DELETE FROM ${tableName} WHERE file_name = ?`;
@@ -382,9 +450,11 @@ module.exports = {
   dbUse,
   dbCreateTable,
   dbCreateTableVideos,
+  dbCreateTableComments,
   dbSetup,
   dbInsertRecord,
   dbInsertVideoRecord,
+  dbInsertCommentRecord,
   dbGetAllRecords,
   dbGetRecordByFilter,
   dbGetRecordByFilterValue,

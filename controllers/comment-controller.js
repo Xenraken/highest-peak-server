@@ -16,7 +16,6 @@ async function commentUpload(req, res) {
         console.error("Comment upload error:", err)
         return res.status(500).json({ message: "An error occurred during comment upload", error: err.message });
     }
-
 }
 
 // get comments by video or user id depending on the request

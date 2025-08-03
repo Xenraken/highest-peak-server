@@ -58,7 +58,8 @@ function dbCreateTableVideos(dbName) {
   return new Promise((resolve, reject) => {
     const queryTableVideosCreation = `CREATE TABLE IF NOT EXISTS ${dbName}.videos 
         (id INT AUTO_INCREMENT PRIMARY KEY, 
-        user_id INT NOT NULL, 
+        user_id INT NOT NULL,
+        user_name VARCHAR(255) NOT NULL, 
         title VARCHAR(255) NOT NULL, 
         description TEXT, 
         file_name VARCHAR(255) NOT NULL, 
@@ -175,6 +176,7 @@ function dbInsertVideoRecord(tableName, record) {
   return new Promise((resolve, reject) => {
     const queryVideoRecordInsertion = `INSERT INTO ${tableName} (
       user_id,
+      user_name,
       title,
       description,
       file_name,
@@ -182,9 +184,10 @@ function dbInsertVideoRecord(tableName, record) {
       thumbnail_path,
       upload_date,
       views)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const values = [
       record.body.user_id,
+      record.body.user_name,
       record.body.title,
       record.body.description,
       record.videoFile.filename,
@@ -204,6 +207,24 @@ function dbInsertVideoRecord(tableName, record) {
     });
   });
 }
+
+
+// update wiev count
+function dbViewCountUpdate(videoId) {
+  return new Promise((resolve, reject) => {
+    const queryViewUpdate = "UPDATE videos SET views = views + 1 WHERE id = ?"
+    con.query(queryViewUpdate, [videoId], (err, result) => {
+      if (err) {
+        console.error("Error updating view count:", err);
+        return reject(err);
+      }
+      console.log("View count updated");
+      resolve(result);
+    })
+  })
+}
+
+
 
 // insert the given comment record to comment table
 function dbInsertCommentRecord(record) {
@@ -454,6 +475,7 @@ module.exports = {
   dbSetup,
   dbInsertRecord,
   dbInsertVideoRecord,
+  dbViewCountUpdate,
   dbInsertCommentRecord,
   dbGetAllRecords,
   dbGetRecordByFilter,

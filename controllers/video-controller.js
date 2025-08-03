@@ -1,5 +1,5 @@
 const { userInfo } = require("os");
-const { dbInsertVideoRecord, dbDeleteVideoRecord, dbGetAllRecords, dbGetRecordByFilterValue, dbGetVideoDataWithUserName } = require("../db/db-operations");
+const { dbInsertVideoRecord, dbDeleteVideoRecord, dbGetAllRecords, dbGetRecordByFilterValue, dbGetVideoDataWithUserName, dbViewCountUpdate } = require("../db/db-operations");
 const { getVideos, getSingleVideo } = require("../utils/general-utils");
 const fs = require("fs");
 const path = require("path");
@@ -110,6 +110,7 @@ async function videoGetData(req, res) {
     }
 }
 
+// get videos by user id
 async function videoGetByUserID(req, res, query) {
     try {
         if (!query.id) {
@@ -126,6 +127,20 @@ async function videoGetByUserID(req, res, query) {
     }
 }
 
+// update view count
+async function viewCountUpdate(req, res) {
+    try {
+        const videoId = req.params.videoId;
+        await dbViewCountUpdate(videoId);
+        return res.sendStatus(204);
+    }
+    catch (err) {
+        console.error("Error updating view count:", err);
+        return res.status(500).json({ message: "Failed to update views", error: err.message });
+    }
+}
+
+
 module.exports =
 {
     videoUpload,
@@ -133,5 +148,6 @@ module.exports =
     videoGetAll,
     videoGet,
     videoGetByUserID,
-    videoGetData
+    videoGetData,
+    viewCountUpdate
 }
